@@ -1,21 +1,19 @@
+from fastapi import Depends
 import jwt
 from datetime import  datetime, timedelta
 from typing import Optional
 from auth.config import settings
+from auth.dependencies.db import get_db_session
 from auth.exceptions import AuthError
 from auth.model import User
-
+from auth.service import write_fingeprint_jwt_to_db
+from sqlalchemy.ext.asyncio import AsyncSession
 
 def create_jwt(
         payload: dict,
-        expires_delta_minutes: int,
         private_key: str = settings.jwt.private_key.read_text()
 ) -> str:
-    
     payload_copy = payload.copy()
-    payload_copy.update(
-        exp=datetime.utcnow() + timedelta(minutes=expires_delta_minutes)
-    )
     encoded_jwt = jwt.encode(
         payload_copy,
         private_key,
@@ -39,28 +37,43 @@ def decode_jwt(
         raise AuthError(detail='Токен некорректен или просрочен')
     
 
-def create_refresh_token(user: User):
+async def create_refresh_token(
+        user: User,
+        finger_print_hash: str,
+        session: AsyncSession = Depends(get_db_session)
+) -> str:
     jwt_payload = {
         "type": "refresh",
         "sub": user.username,
         "user_id": user.id,
-        "email": user.email
+        "exp": datetime.utcnow() + timedelta(
+            minutes=settings.jwt.refresh_expire)
     }
-    
-
-    return create_jwt(
-        jwt_payload,
-        expires_delta_minutes=settings.jwt.refresh_expire
+    refresh_token = create_jwt(
+        jwt_payload
     )
+    if not await write_fingeprint_jwt_to_db(
+        refresh_token=refresh_token,
+        finger_print_hash=finger_print_hash, 
+        user_id=user.id,
+        expire_at=datetime.utcnow() + timedelta(
+            minutes=settings.jwt.refresh_expire),
+        session=session
+
+    ):
+        raise AuthError(detail='Неизвестная ошибка')
+    return refresh_token
 
 
-def create_access_token(user: User):
+def create_access_token(user: User) -> str:
     jwt_payload = {
-        "type":  "access",
+        "type": "access",
         "sub": user.username,
-        "user_id": user.id
+        "user_id": user.id,
+        "email": user.email,
+        "exp": datetime.utcnow() + timedelta(
+            minutes=settings.jwt.refresh_expire)
     }
     return create_jwt(
         jwt_payload,
-        expires_delta_minutes=settings.jwt.refresh_expire
     )

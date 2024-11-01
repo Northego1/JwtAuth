@@ -1,8 +1,9 @@
+from datetime import datetime
 from fastapi import Depends, Form
 from auth.config import settings
 from sqlalchemy.orm import Session
 from auth.dependencies.db import get_db_session
-from auth.model import User
+from auth.model import User, UserSession
 from auth.repository import DbUserOperations
 from auth.utils.password_utils import hash_password
 
@@ -14,19 +15,21 @@ def get_user(user_id: int):
     pass
 
 
-def write_fingeprint_jwt_to_db(
+async def write_fingeprint_jwt_to_db(
         refresh_token: str,
         finger_print_hash: str,
         user_id: int,
-        db_session: Session
-) -> bool:
-    DbUserOperations.write_user_session(
-        refresh_token,
-        finger_print_hash,
-        user_id,
-        db_session
+        expire_at: datetime,
+        session: AsyncSession
+) -> UserSession:
+    return await DbUserOperations.write_user_session(
+        refresh_token=refresh_token,
+        finger_print_hash=finger_print_hash,
+        expire_at=expire_at,
+        user_id=user_id,
+        session=session
     )
-    return
+
 
 
 def check_fingeprint_jwt(
@@ -52,3 +55,5 @@ async def register_user(
         email=email,
     )
     return user
+
+

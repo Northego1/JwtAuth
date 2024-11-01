@@ -27,14 +27,14 @@ class UserSession(Base):
     __tablename__ = 'user_session'
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey('users.id', ondelete='CASCADE'),
+        nullable=False
+    )
     fingerprint_hash: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
         unique=True  
-    )
-    user_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey('users.id', ondelete='CASCADE'),
-        nullable=False
     )
     refresh_token: Mapped[str] = mapped_column(
         String,

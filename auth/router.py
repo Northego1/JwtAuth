@@ -23,7 +23,7 @@ from auth.pydantic_schemas.auth_responses import (
     ValidationResponse422
 )
 
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.dependencies.validate_user import validate_user
 
@@ -42,25 +42,22 @@ router = APIRouter(tags=['Auth'], prefix='/auth/jwt')
             422: {"model": ValidationResponse422}
         },
 )
-def auth_login(
+async def auth_login(
     response: Response,
     user: User = Depends(validate_user),
     finger_print_hash: str = Depends(get_finger_print_hash),
-    db_session:  Session = Depends(get_db_session)
+    session: AsyncSession = Depends(get_db_session)
 ) -> AuthResponse200:
     
-    refresh_jwt = create_refresh_token(user)
-    write_fingeprint_jwt_to_db(
-        refresh_jwt,
-        finger_print_hash, 
-        user.id,
-        db_session
+    access_jwt: str = create_access_token(user)
+    refresh_jwt: str = await create_refresh_token(
+        user=user,
+        finger_print_hash=finger_print_hash,
+        session=session
     )
-    access_jwt =  create_access_token(user)
-
     response.set_cookie(
         key="refresh_jwt",
-        value=access_jwt,
+        value=refresh_jwt,
         httponly=True,
         samesite='strict',
         max_age=(settings.jwt.refresh_expire * 60)
@@ -82,10 +79,10 @@ def auth_login(
             422: {"model": ValidationResponse422}
         },
 )
-def auth_refresh_jwt(
+async def auth_refresh_jwt(
     jwt_uset: JwtUserDependency = Depends(get_user_by_refresh_jwt),
     finger_print_hash: str = Depends(get_finger_print_hash),
-    db_session: Session = Depends(get_db_session)
+    db_session: AsyncSession = Depends(get_db_session)
 ) -> AuthResponse200:
     
     user: User = jwt_uset.get_current_user()
