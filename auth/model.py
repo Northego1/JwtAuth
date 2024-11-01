@@ -3,7 +3,7 @@ from pydantic import EmailStr
 from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, LargeBinary
 from sqlalchemy.orm import mapped_column, Mapped
 from sqlalchemy.orm import DeclarativeBase
-
+from sqlalchemy.orm import relationship
 
 class Base(DeclarativeBase):
     pass
@@ -18,7 +18,10 @@ class User(Base):
     email: Mapped[str] = mapped_column(String, unique=True,  nullable=True)
     is_active: Mapped[bool]  = mapped_column(Boolean, nullable=False)
 
-
+    sessions = relationship( #o2m
+        "UserSession",
+        back_populates='user'
+    )
 
 class UserSession(Base):
     __tablename__ = 'user_session'
@@ -40,4 +43,7 @@ class UserSession(Base):
     )
     expire_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
-
+    user = relationship( #m2o
+        "User",
+        back_populates='sessions'
+    )

@@ -1,38 +1,45 @@
 from auth.utils.password_utils import check_password
 from auth.exceptions import AuthError
 from auth.model import User
-from auth.repository import db
+from auth.repository import DbUserOperations
 
-from fastapi.security import (
-    HTTPBearer,
-)
+
 from fastapi import (
     Form,
 )
 
-
-
-def validate_user_auth(
+class ValidateUser:
+    def __init__(   
+        self,     
         username: str = Form(),
-        password: str = Form(),
-) -> User:
-    user: User = db.get_user(username=username)
-    if not user:
-        raise AuthError()
-    
-    if not check_password(
-        password=password,
-        hashed_password=user.hashed_password
+        password: str = Form()
     ):
-        raise AuthError()
-    
-    if not user.is_active:
-        raise AuthError(
+        self.username: str = username
+        self.password: str = password
+        self.user: User = DbUserOperations.get_user(search_attr=username)
+
+    def __call__(self):
+        if not self.user:
+            raise AuthError()
+        self.verify_password()
+        self.verify_is_active()
+        return self.user
+
+
+    def verify_password(self):
+        if not check_password(
+            password=self.password,
+            hashed_password=self.user.hashed_password
+        ):
+            raise AuthError()
+        
+    def verify_is_active(self):
+        if not self.user.is_active:
+            raise AuthError(
             status_code=403,
             detail='Пользователь не активен'
         )
-    
-    return user
+
 
 
 

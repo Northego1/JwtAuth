@@ -1,17 +1,19 @@
 from abc import ABC, abstractmethod
 import email
 from pydantic import EmailStr
+from sqlalchemy.orm import Session
 
-from auth.model import User
+
+from auth.model import User, UserSession
 
 
-class db:
+class DbUserOperations:
     @staticmethod
     def get_user(
-            username: str,
+            search_attr,
     ) -> User | None:
-        
-        if username == 'John':
+        print(f'{search_attr=}')
+        if search_attr == 'John' or search_attr == 1:
             return User(
                 id=1,
                 username='John',
@@ -19,6 +21,7 @@ class db:
                 email='John@gmail.com',
                 is_active=True
             )
+
 
     @staticmethod
     def create_user(
@@ -30,8 +33,23 @@ class db:
         pass
 
 
+    @staticmethod
     def update_user(
-            self,
             user_id: int,
     ):
         pass
+
+    
+    @staticmethod
+    def write_user_session(
+        refresh_token: str,
+        finger_print_hash: str,
+        user_id: int,
+        db_session: Session
+    ):
+        record = UserSession(
+            refresh_token=refresh_token,
+            fingerprint_hash = finger_print_hash,
+            user_id=user_id     
+        )
+        return record
