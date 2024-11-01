@@ -11,7 +11,7 @@ class TokenInfo(BaseModel):
 class AuthResponse200(BaseModel):
     response_status: int
     detail: str | None = None
-    token: TokenInfo 
+    token: TokenInfo | None = None
     
 
 class AuthResponse40x(BaseModel):

@@ -1,3 +1,4 @@
+from typing import Any, AsyncGenerator
 from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
@@ -12,12 +13,12 @@ engine = create_async_engine(
     url='postgresql+asyncpg://postgres:0420@localhost:5432/auth'
 )
 
-Session = async_sessionmaker(bind=engine, expire_on_commit=True)
+async_session_session = async_sessionmaker(bind=engine, expire_on_commit=True)
 
 
 
-async def get_db_session():
-    with Session() as session:
+async def get_db_session() -> AsyncGenerator[AsyncSession, Any]:
+    async with async_session_session() as session:
         yield session
 
 

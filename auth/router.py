@@ -8,9 +8,11 @@ import jwt
 from auth.config import settings
 from auth.dependencies.current_user import JwtUserDependency, get_user_by_access_jwt, get_user_by_refresh_jwt
 from auth.dependencies.db import get_db_session
-from auth.exceptions import AuthError
-from auth.repository import DbUserOperations
-from auth.service import check_fingeprint_jwt, write_fingeprint_jwt_to_db
+from auth.service import (
+    check_fingeprint_jwt, 
+    write_fingeprint_jwt_to_db,
+    register_user
+)
 from auth.utils.finger_print_utils import get_finger_print_hash
 from auth.utils.jwt_utils import create_access_token, create_refresh_token
 from auth.model import User
@@ -23,7 +25,7 @@ from auth.pydantic_schemas.auth_responses import (
 
 from sqlalchemy.orm import Session
 
-from auth.dependencies.validate_user import ValidateUser
+from auth.dependencies.validate_user import validate_user
 
 
 router = APIRouter(tags=['Auth'], prefix='/auth/jwt')
@@ -42,11 +44,11 @@ router = APIRouter(tags=['Auth'], prefix='/auth/jwt')
 )
 def auth_login(
     response: Response,
-    validated_user= Depends(ValidateUser),
+    user: User = Depends(validate_user),
     finger_print_hash: str = Depends(get_finger_print_hash),
     db_session:  Session = Depends(get_db_session)
 ) -> AuthResponse200:
-    user: User = validated_user()
+    
     refresh_jwt = create_refresh_token(user)
     write_fingeprint_jwt_to_db(
         refresh_jwt,
@@ -115,3 +117,19 @@ def check_self_info(
         "username": user.username,
     }
 
+
+@router.post(
+        '/register',
+        response_model_exclude_none=True,
+        responses={
+            200: {"model": AuthResponse200},
+            400: {"model": AuthResponse40x},
+        },
+)
+async def register_user(
+    user: User = Depends(register_user)
+):
+    return AuthResponse200(
+        response_status=200,
+        detail=f"user {user.id!r} succesfully registred"
+    ).model_dump(exclude_none=True)

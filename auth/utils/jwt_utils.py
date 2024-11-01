@@ -46,6 +46,8 @@ def create_refresh_token(user: User):
         "user_id": user.id,
         "email": user.email
     }
+    
+
     return create_jwt(
         jwt_payload,
         expires_delta_minutes=settings.jwt.refresh_expire

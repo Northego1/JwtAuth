@@ -1,36 +1,63 @@
 from abc import ABC, abstractmethod
+from curses.ascii import isdigit
 import email
 from pydantic import EmailStr
-from sqlalchemy.orm import Session
-
-
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy import or_, select
+from auth.exceptions import AuthError
 from auth.model import User, UserSession
 
 
 class DbUserOperations:
     @staticmethod
-    def get_user(
-            search_attr,
+    async def get_user(
+        session: AsyncSession,
+        search_attr: str | int,
     ) -> User | None:
-        print(f'{search_attr=}')
-        if search_attr == 'John' or search_attr == 1:
-            return User(
-                id=1,
-                username='John',
-                hashed_password=b'$2b$12$eIG7rlZpTrV36cla8sBqLuoGHIDXnDT.4XzF0lXYNV4229eGTKOpG',
-                email='John@gmail.com',
-                is_active=True
+        quary = (
+            select(User)
+            .where(
+                or_(
+                    User.username == str(search_attr) if search_attr.isalpha() else None,
+                    User.id == int(search_attr) if search_attr.isdigit() else None
+                )
             )
-
+        )
+        try:
+            user = await session.execute(quary)
+            user = user.scalar_one_or_none()
+            return user
+        except SQLAlchemyError as e:
+            raise AuthError(detail=f'Database error {e!r}')
+        
 
     @staticmethod
-    def create_user(
-            username: str,
-            password: bytes,
-            email: EmailStr,
-            is_active: bool
-    ) -> User | None:
-        pass
+    async def create_user(
+        session: AsyncSession,
+        username: str,
+        hashed_password: bytes,
+        email: EmailStr
+    ) -> User:
+        new_user = User(
+            username=username,
+            hashed_password=hashed_password,
+            email=email,
+            is_active=True
+        )
+        session.add(new_user)
+        try:
+            await session.commit()
+            await session.refresh(new_user)
+            return new_user
+        except IntegrityError:
+            await session.rollback()
+            raise AuthError(
+                status_code=400,
+                detail=f'Имя пользователя {username} занято'
+            )
+        except SQLAlchemyError as e:
+            raise AuthError('Database error {e!r}')
 
 
     @staticmethod
@@ -41,15 +68,29 @@ class DbUserOperations:
 
     
     @staticmethod
-    def write_user_session(
+    async def write_user_session(
         refresh_token: str,
         finger_print_hash: str,
         user_id: int,
-        db_session: Session
+        session: AsyncSession
     ):
         record = UserSession(
-            refresh_token=refresh_token,
             fingerprint_hash = finger_print_hash,
-            user_id=user_id     
+            user_id=user_id,
+            refresh_token=refresh_token                
         )
+        session.add(record)
+        try:
+            await session.commit()
+            await session.refresh(record)
+            return record
+        except IntegrityError:
+            await session.rollback()
+        except SQLAlchemyError as e:
+            raise AuthError(f'Database error {e!r}')
         return record
+    
+
+    @staticmethod
+    async def read_user_session():
+        pass

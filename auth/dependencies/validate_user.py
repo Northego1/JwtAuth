@@ -1,47 +1,51 @@
+from auth.dependencies.db import get_db_session
 from auth.utils.password_utils import check_password
 from auth.exceptions import AuthError
 from auth.model import User
 from auth.repository import DbUserOperations
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 from fastapi import (
+    Depends,
     Form,
 )
 
-class ValidateUser:
-    def __init__(   
-        self,     
-        username: str = Form(),
-        password: str = Form()
+
+def verify_password(
+    password: str,
+    hashed_password: bytes
+):
+    if not check_password(
+        password=password,
+        hashed_password=hashed_password
     ):
-        self.username: str = username
-        self.password: str = password
-        self.user: User = DbUserOperations.get_user(search_attr=username)
+        raise AuthError("Неправильный логин или пароль")
+    
 
-    def __call__(self):
-        if not self.user:
-            raise AuthError()
-        self.verify_password()
-        self.verify_is_active()
-        return self.user
-
-
-    def verify_password(self):
-        if not check_password(
-            password=self.password,
-            hashed_password=self.user.hashed_password
-        ):
-            raise AuthError()
-        
-    def verify_is_active(self):
-        if not self.user.is_active:
-            raise AuthError(
-            status_code=403,
-            detail='Пользователь не активен'
-        )
+def verify_is_active(user: User):
+    if not user.is_active:
+        raise AuthError(
+        status_code=403,
+        detail='Пользователь не активен'
+    )
 
 
+async def validate_user(
+    session: AsyncSession = Depends(get_db_session), 
+    username: str = Form(),
+    password: str = Form(),
+):
+    if not (user:= await DbUserOperations.get_user(
+        session=session,
+        search_attr=username
+    )):
+        raise AuthError(detail="Неправильный логин или пароль")
 
+    verify_password(password, user.hashed_password)
+    verify_is_active(user)
+    return user
 
 
 
