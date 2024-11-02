@@ -13,10 +13,10 @@ class AuthJwt(BaseModel):
     access_type: str = "access"
     refresh_type: str = "refresh"
 
-
     refresh_expire: int = 43200 # 30 days
     access_expire: int = 20
 
+    max_user_sessions: int = 5
 
 class Settings(BaseSettings):
     jwt: AuthJwt = AuthJwt()

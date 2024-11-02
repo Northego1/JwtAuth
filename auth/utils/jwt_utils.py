@@ -6,7 +6,7 @@ from auth.config import settings
 from auth.dependencies.db import get_db_session
 from auth.exceptions import AuthError
 from auth.model import User
-from auth.service import write_fingeprint_jwt_to_db
+from auth.services.session_control import control_user_sessions
 from sqlalchemy.ext.asyncio import AsyncSession
 
 def create_jwt(
@@ -52,16 +52,14 @@ async def create_refresh_token(
     refresh_token = create_jwt(
         jwt_payload
     )
-    if not await write_fingeprint_jwt_to_db(
+    await control_user_sessions(
         refresh_token=refresh_token,
         finger_print_hash=finger_print_hash, 
         user_id=user.id,
         expire_at=datetime.utcnow() + timedelta(
             minutes=settings.jwt.refresh_expire),
         session=session
-
-    ):
-        raise AuthError(detail='Неизвестная ошибка')
+    )
     return refresh_token
 
 

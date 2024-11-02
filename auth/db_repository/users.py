@@ -9,8 +9,7 @@ from auth.exceptions import AuthError
 from auth.model import User, UserSession
 
 
-
-class DbUserOperations:
+class UserOperations:
     @staticmethod
     async def get_user(
         session: AsyncSession,
@@ -65,59 +64,4 @@ class DbUserOperations:
     def update_user(
             user_id: int,
     ):
-        pass
-
-    
-    @staticmethod
-    async def write_user_session(
-        refresh_token: str,
-        finger_print_hash: str,
-        expire_at: datetime,
-        user_id: int,
-        session: AsyncSession
-    ):
-        # Проверка на наличие записи с указанным хэшем и user_id
-        query = (
-            select(UserSession)
-            .where(
-                UserSession.fingerprint_hash == finger_print_hash,
-                UserSession.user_id == user_id
-            )
-        )
-        result = await session.execute(query)
-        existing_record = result.scalar_one_or_none()
-        
-        if existing_record:
-            stmt = (
-                update(UserSession)
-                .where(
-                    UserSession.fingerprint_hash == finger_print_hash,
-                    UserSession.user_id == user_id
-                )
-                .values(refresh_token=refresh_token, expire_at=expire_at)
-            )
-            await session.execute(stmt)
-        else:
-            new_record = UserSession(
-                refresh_token=refresh_token,
-                fingerprint_hash=finger_print_hash,
-                expire_at=expire_at,
-                user_id=user_id
-            )
-            session.add(new_record)
-        try:
-            await session.commit()
-            if not existing_record:
-                await session.refresh(new_record)
-            return existing_record if existing_record else new_record
-        except IntegrityError as e:
-            await session.rollback()
-            raise AuthError(detail=f'Database error {e!r}')
-        except SQLAlchemyError as e:
-            await session.rollback()
-            raise AuthError(detail=f'Database error {e!r}')
-
-
-    @staticmethod
-    async def read_user_session():
         pass

@@ -4,14 +4,16 @@ from fastapi import (
     Request,
     Response
 )
-import jwt
 from auth.config import settings
-from auth.dependencies.current_user import JwtUserDependency, get_user_by_access_jwt, get_user_by_refresh_jwt
+from auth.dependencies.current_user import (
+    JwtUserDependency,
+    get_user_by_access_jwt,
+    get_user_by_refresh_jwt
+)
 from auth.dependencies.db import get_db_session
-from auth.service import (
-    check_fingeprint_jwt, 
-    write_fingeprint_jwt_to_db,
-    register_user
+from auth.services.session_control import check_fingeprint_jwt
+from auth.services.user_control import (
+    user_registration
 )
 from auth.utils.finger_print_utils import get_finger_print_hash
 from auth.utils.jwt_utils import create_access_token, create_refresh_token
@@ -55,6 +57,7 @@ async def auth_login(
         finger_print_hash=finger_print_hash,
         session=session
     )
+
     response.set_cookie(
         key="refresh_jwt",
         value=refresh_jwt,
@@ -87,15 +90,12 @@ async def auth_refresh_jwt(
     
     user: User = jwt_uset.get_current_user()
 
-    check_fingeprint_jwt(
+    await check_fingeprint_jwt(
         refresh_token=jwt_uset.token,
         finger_print_hash=finger_print_hash,
         user_id=user,
         db_session=db_session
     )
-
-
-
     access_jwt = create_access_token(user)
     token = TokenInfo(
         access_token=access_jwt,
@@ -124,7 +124,7 @@ def check_self_info(
         },
 )
 async def register_user(
-    user: User = Depends(register_user)
+    user: User = Depends(user_registration)
 ):
     return AuthResponse200(
         response_status=200,
