@@ -1,5 +1,5 @@
 from typing import Union
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class TokenInfo(BaseModel):
