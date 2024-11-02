@@ -1,7 +1,6 @@
 from fastapi import (
     APIRouter,
     Depends,
-    Request,
     Response
 )
 from auth.config import settings
@@ -11,12 +10,15 @@ from auth.dependencies.get_current_user import (
 )
 from auth.dependencies.db import get_db_session
 from auth.exceptions import AuthError
-from auth.services.session_control import check_finger_print_jwt
+from auth.dependencies.fingerprint_handler import check_finger_print_jwt
 from auth.services.user_control import (
     user_registration
 )
 from auth.utils.finger_print_utils import get_finger_print_hash
-from auth.utils.jwt_utils import create_access_token, create_refresh_token
+from auth.dependencies.jwt_create_manager import (
+    create_access_token,
+    create_refresh_token
+)
 from auth.model import User
 from auth.pydantic_schemas.auth_responses import (
     AuthResponse200,

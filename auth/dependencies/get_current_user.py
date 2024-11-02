@@ -10,10 +10,12 @@ from auth.dependencies.jwt_getters import (
     get_access_jwt_from_headers,
     get_refresh_jwt_from_cookie
 )
-from auth.services.user_control import UserOperations
-from auth.utils.jwt_utils import decode_jwt
 from auth.exceptions import AuthError
 from auth.model import User
+from auth.services.user_control import UserOperations
+from auth.utils.jwt_utils import decode_jwt
+
+
 
 
 class CurrentUser:
@@ -39,7 +41,6 @@ class CurrentUser:
     
 
 async def get_user_by_access_jwt(
-    request: Request,
     session: AsyncSession = Depends(get_db_session),
     token: str = Depends(get_access_jwt_from_headers)
 ) -> User:
@@ -48,7 +49,6 @@ async def get_user_by_access_jwt(
 
 
 async def get_user_by_refresh_jwt(
-    request: Request,
     session: AsyncSession = Depends(get_db_session),
     token: str = Depends(get_refresh_jwt_from_cookie)
 ) -> User:
