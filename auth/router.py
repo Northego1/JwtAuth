@@ -60,7 +60,6 @@ async def auth_login(
         finger_print_hash=finger_print_hash,
         session=session
     )
-
     response.set_cookie(
         key="refresh_jwt",
         value=refresh_jwt,

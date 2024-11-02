@@ -34,7 +34,6 @@ class UserSession(Base):
     fingerprint_hash: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
-        unique=True  
     )
     refresh_token: Mapped[str] = mapped_column(
         String,
