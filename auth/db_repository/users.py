@@ -1,28 +1,24 @@
 
 from datetime import datetime
-import email
+from typing import Any
 from pydantic import EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from sqlalchemy import or_, select, update, func
+from sqlalchemy import select
 from auth.exceptions import AuthError
-from auth.model import User, UserSession
+from auth.model import User
 
 
 class UserOperations:
     @staticmethod
     async def get_user(
         session: AsyncSession,
-        search_attr: str | int,
+        searching_parameter: Any,
+        value: Any
     ) -> User | None:
         quary = (
             select(User)
-            .where(
-                or_(
-                    User.username == str(search_attr) if search_attr.isalpha() else None,
-                    User.id == int(search_attr) if search_attr.isdigit() else None
-                )
-            )
+            .where(getattr(User, searching_parameter) == value)
         )
         try:
             user = await session.execute(quary)

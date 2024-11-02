@@ -1,15 +1,13 @@
-from datetime import datetime
-from fastapi import Depends, Form
-from auth.config import settings
-from sqlalchemy.orm import Session
-from auth.dependencies.db import get_db_session
-from auth.model import User, UserSession
-from auth.db_repository.users_sessions import UserSessionOperations
-from auth.utils.password_utils import hash_password
-from auth.db_repository.users import UserOperations
+from fastapi import (
+    Depends,
+    Form
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 
-
+from auth.dependencies.db import get_db_session
+from auth.model import User
+from auth.utils.password_utils import hash_password
+from auth.db_repository.users import UserOperations
 
 
 async def user_registration(

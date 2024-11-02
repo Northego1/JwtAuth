@@ -32,14 +32,15 @@ def verify_is_active(user: User):
     )
 
 
-async def validate_user(
+async def verify_user(
     session: AsyncSession = Depends(get_db_session), 
     username: str = Form(),
     password: str = Form(),
 ):
     if not (user:= await UserOperations.get_user(
         session=session,
-        search_attr=username
+        searching_parameter='username',
+        value=username
     )):
         raise AuthError(detail="Неправильный логин или пароль")
 

@@ -5,13 +5,13 @@ from fastapi import (
     Response
 )
 from auth.config import settings
-from auth.dependencies.current_user import (
-    JwtUserDependency,
+from auth.dependencies.get_current_user import (
     get_user_by_access_jwt,
     get_user_by_refresh_jwt
 )
 from auth.dependencies.db import get_db_session
-from auth.services.session_control import check_fingeprint_jwt
+from auth.exceptions import AuthError
+from auth.services.session_control import check_finger_print_jwt
 from auth.services.user_control import (
     user_registration
 )
@@ -27,7 +27,7 @@ from auth.pydantic_schemas.auth_responses import (
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from auth.dependencies.validate_user import validate_user
+from auth.dependencies.verify_user import verify_user
 
 
 router = APIRouter(tags=['Auth'], prefix='/auth/jwt')
@@ -46,7 +46,7 @@ router = APIRouter(tags=['Auth'], prefix='/auth/jwt')
 )
 async def auth_login(
     response: Response,
-    user: User = Depends(validate_user),
+    user: User = Depends(verify_user),
     finger_print_hash: str = Depends(get_finger_print_hash),
     session: AsyncSession = Depends(get_db_session)
 ) -> AuthResponse200:
@@ -83,19 +83,13 @@ async def auth_login(
         },
 )
 async def auth_refresh_jwt(
-    jwt_uset: JwtUserDependency = Depends(get_user_by_refresh_jwt),
-    finger_print_hash: str = Depends(get_finger_print_hash),
-    db_session: AsyncSession = Depends(get_db_session)
+    user: User = Depends(get_user_by_refresh_jwt),
+    valid_fingerprint: bool = Depends(check_finger_print_jwt)
 ) -> AuthResponse200:
-    
-    user: User = jwt_uset.get_current_user()
+    if not valid_fingerprint:
+        raise AuthError()
 
-    await check_fingeprint_jwt(
-        refresh_token=jwt_uset.token,
-        finger_print_hash=finger_print_hash,
-        user_id=user,
-        db_session=db_session
-    )
+    
     access_jwt = create_access_token(user)
     token = TokenInfo(
         access_token=access_jwt,

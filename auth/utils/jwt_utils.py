@@ -1,13 +1,15 @@
 from fastapi import Depends
 import jwt
+from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import  datetime, timedelta
 from typing import Optional
+
 from auth.config import settings
 from auth.dependencies.db import get_db_session
 from auth.exceptions import AuthError
 from auth.model import User
 from auth.services.session_control import control_user_sessions
-from sqlalchemy.ext.asyncio import AsyncSession
+
 
 def create_jwt(
         payload: dict,
