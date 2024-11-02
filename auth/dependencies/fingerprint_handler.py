@@ -31,7 +31,8 @@ async def check_finger_print_jwt(
 
     finger_print_hash_from_db = await user_session.get_hash_by_refresh_token()
     if finger_print_hash_from_db != finger_print_hash_from_request:
-        user_session.delete_user_session(fingerprint_hash=finger_print_hash_from_db)
+        await user_session.delete_user_session(fingerprint_hash=finger_print_hash_from_db)
+        await user_session.commit_session()
         return False
     return True
     

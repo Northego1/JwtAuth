@@ -42,16 +42,20 @@ class CurrentUser:
 
 async def get_user_by_access_jwt(
     session: AsyncSession = Depends(get_db_session),
-    token: str = Depends(get_access_jwt_from_headers)
+    token: str | None = Depends(get_access_jwt_from_headers)
 ) -> User:
+    if not token:
+        return None
     user = CurrentUser(token, settings.jwt.access_type)
     return await user.get_current_user(session)
 
 
 async def get_user_by_refresh_jwt(
     session: AsyncSession = Depends(get_db_session),
-    token: str = Depends(get_refresh_jwt_from_cookie)
+    token: str | None = Depends(get_refresh_jwt_from_cookie)
 ) -> User:
+    if not token:
+        return None
     user = CurrentUser(token, settings.jwt.refresh_type)
     return await user.get_current_user(session)
 

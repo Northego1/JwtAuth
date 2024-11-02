@@ -3,6 +3,7 @@ from fastapi import (
     Depends,
     Response
 )
+from fastapi.responses import HTMLResponse
 from auth.config import settings
 from auth.dependencies.get_current_user import (
     get_user_by_access_jwt,
@@ -89,7 +90,7 @@ async def auth_refresh_jwt(
     valid_fingerprint: bool = Depends(check_finger_print_jwt)
 ) -> AuthResponse200:
     if not valid_fingerprint:
-        raise AuthError()
+        raise AuthError(detail='invalid')
 
     
     access_jwt = create_access_token(user)
@@ -104,8 +105,10 @@ async def auth_refresh_jwt(
 
 @router.get('/me')
 def check_self_info(
-    user: User = Depends(get_user_by_access_jwt)
+    user: User | None = Depends(get_user_by_access_jwt)
 ):
+    if not user:
+        return HTMLResponse(status_code=505)
     return {
         "username": user.username,
     }

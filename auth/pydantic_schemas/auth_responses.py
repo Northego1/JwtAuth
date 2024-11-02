@@ -10,13 +10,13 @@ class TokenInfo(BaseModel):
 class AuthResponse200(BaseModel):
     response_status: int
     detail: str | None = None
-    token: TokenInfo | None = None
+    JWT: TokenInfo | None = None
     
 
 class AuthResponse40x(BaseModel):
     response_status: int
     detail: str | None = None
-    token: None = None
+    JWT: None = None
 
 
 class ValidationResponseDetails(BaseModel):
