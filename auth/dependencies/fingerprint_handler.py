@@ -2,8 +2,6 @@
 from fastapi import (
     Depends,
 )
-
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.dependencies.get_current_user import get_user_by_refresh_jwt

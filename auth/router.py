@@ -3,7 +3,7 @@ from fastapi import (
     Depends,
     Response
 )
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from auth.config import settings
 from auth.dependencies.get_current_user import (
     get_user_by_access_jwt,
@@ -70,6 +70,7 @@ async def auth_login(
     token = TokenInfo(access_token=access_jwt)
     return AuthResponse200(
         response_status=200,
+        detail='success',
         token=token.model_dump(exclude_none=True)
     )
 
@@ -93,13 +94,15 @@ async def auth_refresh_jwt(
 
     
     access_jwt = create_access_token(user)
+
     token = TokenInfo(
         access_token=access_jwt,
     )
     return AuthResponse200(
-        response_status=200,
-        token=token.model_dump(exclude_none=True)
-    )
+            response_status=200,
+            detail='success',
+            JWT=token.model_dump(exclude_none=True)
+        )
 
 
 @router.get('/me')
@@ -126,5 +129,23 @@ async def register_user(
 ):
     return AuthResponse200(
         response_status=200,
-        detail=f"user {user.id!r} succesfully registred"
+        detail=f"user {user.username!r} succesfully registred"
     ).model_dump(exclude_none=True)
+
+
+@router.post(
+        '/logout',
+        response_model_exclude_none=True,
+        responses={
+            200: {"model": AuthResponse200},
+            400: {"model": AuthResponse40x},
+        },
+)
+async def logout(
+    
+):
+    pass
+# 1. создать блэк лист для аксес токенов и помещать туда при логауте на таймер
+# времени жизни токена
+# 2. реструктурировать приложение, создать прослойку между эндпоинтами и бизнес логикой
+# чтобы можно было легко заменить бизнес логику на другую!!!
