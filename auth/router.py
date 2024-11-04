@@ -1,6 +1,7 @@
 from fastapi import (
     APIRouter,
     Depends,
+    Request,
     Response
 )
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -17,7 +18,7 @@ from auth.services.logout_control import LogoutControl
 from auth.services.user_control import (
     user_registration
 )
-from auth.custom_middleware import is_access_jwt_blacklisted
+from auth.services.custom_middleware.is_access_jwt_blacklisted import is_access_jwt_blacklisted
 from auth.utils.fingerprint_utils import get_fingerprint_hash
 from auth.dependencies.jwt_create_manager import (
     create_access_token,
@@ -110,7 +111,9 @@ async def auth_refresh_jwt(
 
 
 @router.get('/me')
-def check_self_info(
+@is_access_jwt_blacklisted
+async def check_self_info(
+    request: Request,
     user: User | None = Depends(get_user_by_access_jwt)
 ):
     if not user:
@@ -149,7 +152,7 @@ async def logout(
     access_token: str = Depends(get_access_jwt_from_headers),
     session: AsyncSession = Depends(get_db_session),
     fingerprint_hash: str = Depends(get_fingerprint_hash)
-):
+) -> AuthResponse200:
     access_jwt_payload: dict = decode_and_verify_jwt(token=access_token)
     
     logout_manager = LogoutControl(
@@ -169,7 +172,3 @@ async def logout(
         detail='success logout',
     )
     
-# 1. создать блэк лист для аксес токенов и помещать туда при логауте на таймер
-# времени жизни токена
-# 2. реструктурировать приложение, создать прослойку между эндпоинтами и бизнес логикой
-# чтобы можно было легко заменить бизнес логику на другую!!!

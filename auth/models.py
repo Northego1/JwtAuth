@@ -1,6 +1,8 @@
 from datetime import datetime
+import uuid
 from pydantic import EmailStr
 from sqlalchemy import (
+    UUID,
     Boolean,
     DateTime,
     ForeignKey,
@@ -37,7 +39,8 @@ class UserSession(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey('users.id', ondelete='CASCADE'),
-        nullable=False
+        nullable=False,
+        index=True
     )
     fingerprint_hash: Mapped[str] = mapped_column(
         String(255),
@@ -59,7 +62,11 @@ class UserSession(Base):
 class BlackListAccessJwt(Base):
     __tablename__ = 'black_list_access_jwt'
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4()
+        )
     access_token: Mapped[str] = mapped_column(
         String,
         nullable=False,

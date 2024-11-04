@@ -16,12 +16,12 @@ class UserCrud:
         searching_parameter: Any,
         value: Any
     ) -> User | None:
-        quary = (
+        query = (
             select(User)
             .where(getattr(User, searching_parameter) == value)
         )
         try:
-            user = await session.execute(quary)
+            user = await session.execute(query)
             user = user.scalar_one_or_none()
             return user
         except SQLAlchemyError as e:

@@ -1,3 +1,4 @@
+import uuid
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import  datetime, timedelta
@@ -41,6 +42,7 @@ def create_access_token(user: User) -> str:
         "sub": user.username,
         "user_id": user.id,
         "email": user.email,
+        "jti": str(uuid.uuid4()),
         "exp": datetime.utcnow() + timedelta(
             minutes=settings.jwt.refresh_expire),
     }
