@@ -6,12 +6,8 @@ from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.config import settings
-from auth.model import UserSession
-from auth.db_repository.users_sessions_CRUD import UserSessionOperations
-
-
-
-
+from auth.models import UserSession
+from auth.db_repository.users_sessions_CRUD import UserSessionCrud
 
 
 async def control_user_sessions(
@@ -22,9 +18,9 @@ async def control_user_sessions(
         session: AsyncSession
 ) -> UserSession:
     
-    user_session = UserSessionOperations(
+    user_session = UserSessionCrud(
         refresh_token=refresh_token,
-        finger_print_hash=finger_print_hash,
+        fingerprint_hash=finger_print_hash,
         user_id=user_id,
         expire_at=expire_at,
         session=session

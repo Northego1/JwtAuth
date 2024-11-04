@@ -10,17 +10,20 @@ from auth.dependencies.get_current_user import (
     get_user_by_refresh_jwt
 )
 from auth.dependencies.db import get_db_session
+from auth.dependencies.jwt_getters import get_access_jwt_from_headers
 from auth.exceptions import AuthError
 from auth.dependencies.fingerprint_handler import check_finger_print_jwt
+from auth.services.logout_control import LogoutControl
 from auth.services.user_control import (
     user_registration
 )
-from auth.utils.finger_print_utils import get_finger_print_hash
+from auth.custom_middleware import is_access_jwt_blacklisted
+from auth.utils.fingerprint_utils import get_fingerprint_hash
 from auth.dependencies.jwt_create_manager import (
     create_access_token,
     create_refresh_token
 )
-from auth.model import User
+from auth.models import User
 from auth.pydantic_schemas.auth_responses import (
     AuthResponse200,
     AuthResponse40x,
@@ -31,6 +34,7 @@ from auth.pydantic_schemas.auth_responses import (
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.dependencies.verify_user import verify_user
+from auth.utils.jwt_utils import decode_and_verify_jwt
 
 
 router = APIRouter(tags=['Auth'], prefix='/auth/jwt')
@@ -50,7 +54,7 @@ router = APIRouter(tags=['Auth'], prefix='/auth/jwt')
 async def auth_login(
     response: Response,
     user: User = Depends(verify_user),
-    finger_print_hash: str = Depends(get_finger_print_hash),
+    finger_print_hash: str = Depends(get_fingerprint_hash),
     session: AsyncSession = Depends(get_db_session)
 ) -> AuthResponse200:
     
@@ -70,8 +74,8 @@ async def auth_login(
     token = TokenInfo(access_token=access_jwt)
     return AuthResponse200(
         response_status=200,
-        detail='success',
-        token=token.model_dump(exclude_none=True)
+        detail='success authorization',
+        JWT=token.model_dump(exclude_none=True)
     )
 
 
@@ -100,7 +104,7 @@ async def auth_refresh_jwt(
     )
     return AuthResponse200(
             response_status=200,
-            detail='success',
+            detail='success regisration',
             JWT=token.model_dump(exclude_none=True)
         )
 
@@ -142,9 +146,29 @@ async def register_user(
         },
 )
 async def logout(
-    
+    access_token: str = Depends(get_access_jwt_from_headers),
+    session: AsyncSession = Depends(get_db_session),
+    fingerprint_hash: str = Depends(get_fingerprint_hash)
 ):
-    pass
+    access_jwt_payload: dict = decode_and_verify_jwt(token=access_token)
+    
+    logout_manager = LogoutControl(
+        access_jwt_payload=access_jwt_payload,
+        session=session,
+    )
+    await logout_manager.add_access_token_to_black_list(
+        access_token=access_token
+    )
+
+    await logout_manager.revoke_refresh_token(
+        fingerprint_hash=fingerprint_hash
+    )
+
+    return AuthResponse200(
+        response_status=200,
+        detail='success logout',
+    )
+    
 # 1. создать блэк лист для аксес токенов и помещать туда при логауте на таймер
 # времени жизни токена
 # 2. реструктурировать приложение, создать прослойку между эндпоинтами и бизнес логикой

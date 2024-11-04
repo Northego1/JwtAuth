@@ -7,21 +7,21 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy import delete, or_, select, update, func
 from auth.exceptions import AuthError
-from auth.model import User, UserSession
+from auth.models import User, UserSession
 
 
 
-class UserSessionOperations:
+class UserSessionCrud:
     def __init__(
         self,
-        refresh_token: str,
-        finger_print_hash: str,
+        fingerprint_hash: str,
         user_id: int,
         session: AsyncSession,
+        refresh_token: str = None,
         expire_at: datetime = None,
     ):
         self.refresh_token: str = refresh_token
-        self.finger_print_hash: str = finger_print_hash
+        self.finger_print_hash: str = fingerprint_hash
         self.expire_at: datetime = expire_at
         self.user_id: int = user_id
         self.session: AsyncSession = session
@@ -71,12 +71,12 @@ class UserSessionOperations:
         return count_result.scalar()
 
 
-    async def delete_user_session(self, fingerprint_hash: Any = None):
-        if fingerprint_hash:
+    async def delete_user_session(self, delete_by: str, value: Any = None):
+        if value:
             delete_subquery = (
                 select(UserSession.id)
                 .where(UserSession.user_id == self.user_id)
-                .where(UserSession.fingerprint_hash == fingerprint_hash)
+                .where(getattr(UserSession, delete_by) == value)
             )
         else:
             delete_subquery = (
@@ -100,6 +100,7 @@ class UserSessionOperations:
 
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
+
 
     async def commit_session(self):
         try:

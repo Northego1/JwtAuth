@@ -4,8 +4,8 @@ from datetime import  datetime, timedelta
 
 from auth.config import settings
 from auth.dependencies.db import get_db_session
-from auth.model import User
-from auth.services.session_control import control_user_sessions
+from auth.models import User
+from auth.services.user_session_control import control_user_sessions
 from auth.utils.jwt_utils import encode_jwt
 
 
@@ -42,7 +42,7 @@ def create_access_token(user: User) -> str:
         "user_id": user.id,
         "email": user.email,
         "exp": datetime.utcnow() + timedelta(
-            minutes=settings.jwt.refresh_expire)
+            minutes=settings.jwt.refresh_expire),
     }
     return encode_jwt(
         jwt_payload,

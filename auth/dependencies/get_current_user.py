@@ -10,9 +10,9 @@ from auth.dependencies.jwt_getters import (
     get_refresh_jwt_from_cookie
 )
 from auth.exceptions import AuthError
-from auth.model import User
-from auth.services.user_control import UserOperations
-from auth.utils.jwt_utils import decode_jwt
+from auth.models import User
+from auth.services.user_control import UserCrud
+from auth.utils.jwt_utils import decode_and_verify_jwt
 
 
 class CurrentUser:
@@ -24,7 +24,7 @@ class CurrentUser:
 
     def verify_token_and_decode_to_payload(self) -> None:
         try:
-            self.payload = decode_jwt(self.token_)
+            self.payload = decode_and_verify_jwt(self.token_)
             if self.payload.get('type') != self.token_type_:
                 raise AuthError()
         except Exception as e:
@@ -33,7 +33,7 @@ class CurrentUser:
     async def get_current_user(self, session: AsyncSession) -> User:
         self.verify_token_and_decode_to_payload()
         try:
-            self.user = await UserOperations.get_user(
+            self.user = await UserCrud.get_user(
                 searching_parameter='id',
                 value=self.payload.get('user_id'),
                 session=session

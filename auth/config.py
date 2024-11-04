@@ -7,7 +7,7 @@ BASE_DIR = Path(__file__).resolve().parents[1]
 class AuthJwt(BaseModel):
     private_key: Path = BASE_DIR / "auth" / "jwt_certs" / "jwt-private.pem"
     public_key: Path = BASE_DIR / "auth" / "jwt_certs" / "jwt-public.pem"
-    alghoritm: str = "RS256"
+    algorithm: str = "RS256"
 
     type_field: str = "type"
     access_type: str = "access"

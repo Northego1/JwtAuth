@@ -1,6 +1,13 @@
 from datetime import datetime
 from pydantic import EmailStr
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, LargeBinary
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    LargeBinary
+)
 from sqlalchemy.orm import mapped_column, Mapped
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import relationship
@@ -22,6 +29,7 @@ class User(Base):
         "UserSession",
         back_populates='user'
     )
+
 
 class UserSession(Base):
     __tablename__ = 'user_session'
@@ -45,4 +53,19 @@ class UserSession(Base):
     user = relationship( #m2o
         "User",
         back_populates='sessions'
+    )
+
+
+class BlackListAccessJwt(Base):
+    __tablename__ = 'black_list_access_jwt'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    access_token: Mapped[str] = mapped_column(
+        String,
+        nullable=False,
+        unique=True
+    )
+    expire_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
     )

@@ -16,34 +16,22 @@ def encode_jwt(
     encoded_jwt = jwt.encode(
         payload_copy,
         private_key,
-        algorithm=settings.jwt.alghoritm 
+        algorithm=settings.jwt.algorithm 
     )
     return encoded_jwt
 
 
-def decode_jwt(
+def decode_and_verify_jwt(
         token: str | bytes,
         public_key: str = settings.jwt.public_key.read_text()
-) -> Optional[dict]:
+) -> dict:
     try:
         payload: dict = jwt.decode(
             token,
             public_key, 
-            algorithms=settings.jwt.alghoritm
+            algorithms=settings.jwt.algorithm
         )
         return payload
     except jwt.PyJWTError:
         raise AuthError(detail='Токен некорректен или просрочен')
     
-
-    jwt_payload = {
-        "type": "access",
-        "sub": user.username,
-        "user_id": user.id,
-        "email": user.email,
-        "exp": datetime.utcnow() + timedelta(
-            minutes=settings.jwt.refresh_expire)
-    }
-    return create_jwt(
-        jwt_payload,
-    )

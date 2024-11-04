@@ -21,7 +21,7 @@ config.set_main_option('sqlalchemy.url', 'postgresql+asyncpg://postgres:0420@loc
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-from auth.model import Base
+from auth.models import Base
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,

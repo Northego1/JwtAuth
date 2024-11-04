@@ -1,8 +1,8 @@
 from auth.dependencies.db import get_db_session
 from auth.utils.password_utils import check_password
 from auth.exceptions import AuthError
-from auth.model import User
-from auth.db_repository.users import UserOperations
+from auth.models import User
+from auth.db_repository.users_CRUD import UserCrud
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -37,7 +37,7 @@ async def verify_user(
     username: str = Form(),
     password: str = Form(),
 ):
-    if not (user:= await UserOperations.get_user(
+    if not (user:= await UserCrud.get_user(
         session=session,
         searching_parameter='username',
         value=username

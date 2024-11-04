@@ -6,10 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy import select
 from auth.exceptions import AuthError
-from auth.model import User
+from auth.models import User
 
 
-class UserOperations:
+class UserCrud:
     @staticmethod
     async def get_user(
         session: AsyncSession,
@@ -60,4 +60,9 @@ class UserOperations:
     def update_user(
             user_id: int,
     ):
+        pass
+
+
+    @staticmethod
+    def delete_user():
         pass
