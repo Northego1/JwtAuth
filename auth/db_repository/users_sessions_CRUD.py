@@ -5,7 +5,7 @@ from typing import Any
 from pydantic import EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from sqlalchemy import delete, or_, select, update, func
+from sqlalchemy import delete, insert, or_, select, update, func
 from auth.exceptions import AuthError
 from auth.models import User, UserSession
 
@@ -59,7 +59,7 @@ class UserSessionCrud:
             .where(UserSession.user_id == self.user_id)
         )
         result = await self.session.execute(query)
-        return True if result.scalar_one_or_none() else False
+        return result.scalar_one_or_none()
     
 
     async def count_user_sessions(self) -> int | None:
@@ -97,7 +97,6 @@ class UserSessionCrud:
             .where(UserSession.user_id == self.user_id) 
             .where(UserSession.refresh_token == self.refresh_token)
         )
-
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
